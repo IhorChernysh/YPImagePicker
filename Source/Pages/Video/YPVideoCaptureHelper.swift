@@ -29,6 +29,8 @@ class YPVideoCaptureHelper: NSObject {
     private var previewView: UIView!
     private var motionManager = CMMotionManager()
     private var initVideoZoomFactor: CGFloat = 1.0
+    private let videoLayer = AVCaptureVideoPreviewLayer()
+
     
     // MARK: - Init
     
@@ -52,7 +54,7 @@ class YPVideoCaptureHelper: NSObject {
     
     public func startCamera(completion: @escaping (() -> Void)) {
         if !session.isRunning {
-            sessionQueue.async { [weak self] in
+            sessionQueue.asyncAfter(deadline: .now() + 1) { [weak self] in
                 // Re-apply session preset
                 self?.session.sessionPreset = .high
                 let status = AVCaptureDevice.authorizationStatus(for: AVMediaType.video)
@@ -204,6 +206,8 @@ class YPVideoCaptureHelper: NSObject {
     
     private func setupCaptureSession() {
         session.beginConfiguration()
+        session.resetInputs()
+
         let aDevice = deviceForPosition(.back)
         if let d = aDevice {
             videoInput = try? AVCaptureDeviceInput(device: d)
@@ -274,18 +278,21 @@ class YPVideoCaptureHelper: NSObject {
     // MARK: - Preview
     
     func tryToSetupPreview() {
-        if !isPreviewSetup {
-            setupPreview()
-            isPreviewSetup = true
-        }
+        setupPreview()
+
+//        if !isPreviewSetup {
+//            setupPreview()
+//            isPreviewSetup = true
+//        }
     }
     
     func setupPreview() {
-        let videoLayer = AVCaptureVideoPreviewLayer(session: session)
-        DispatchQueue.main.async {
-            videoLayer.frame = self.previewView.bounds
-            videoLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
-            self.previewView.layer.addSublayer(videoLayer)
+        videoLayer.session = session
+        videoLayer.removeFromSuperlayer()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            self.videoLayer.frame = self.previewView.bounds
+            self.videoLayer.videoGravity = AVLayerVideoGravity.resizeAspectFill
+            self.previewView.layer.addSublayer(self.videoLayer)
         }
     }
 }
