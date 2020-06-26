@@ -52,7 +52,7 @@ class YPVideoCaptureHelper: NSObject {
     
     public func startCamera(completion: @escaping (() -> Void)) {
         if !session.isRunning {
-            sessionQueue.async { [weak self] in
+            DispatchQueue.main.async { [weak self] in
                 // Re-apply session preset
                 self?.session.sessionPreset = .high
                 let status = AVCaptureDevice.authorizationStatus(for: AVMediaType.video)
